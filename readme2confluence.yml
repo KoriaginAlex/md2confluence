@@ -1,0 +1,18 @@
+---
+- hosts: localhost
+  gather_facts: false
+  tasks:
+  - name: convert readme from m2 to html
+    script: md2html.py
+    args:
+      executable: python3
+
+  - name: upload readme to confluence
+    script: uploadReadme.py '{{ title }}' 'readme.html'
+    args:
+      executable: python3
+    register: results
+
+  - name: print messages
+    debug: 
+      msg: "{{ results.stdout }}"

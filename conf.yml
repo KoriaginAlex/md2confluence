@@ -1,0 +1,102 @@
+---
+- hosts: localhost
+  tasks:
+  - name: convert readme from m2 to html
+    script: md2html.py
+    args:
+      executable: python3
+  - name: Check variables
+    debug:
+      msg: "username: {{ confluence_user }}, password: {{ confluence_password }}"
+  - name: check if Confluence page exists
+    uri:
+      url: "http://localhost:8090/rest/api/content/search/?cql=title={{ title }}&space={{ confluence_space }}&type=page&expand=version"
+      user: "{{ confluence_user }}"
+      method: GET
+      password: "{{ confluence_password }}"
+      force_basic_auth: yes
+      status_code: 200
+    register: confluence_validate
+  # - debug:
+  #     var: confluence_validate.json.size
+  - name: if post exists 
+    debug:
+      msg: "post version {{ confluence_validate.json.results[0].version.number }}"
+    when: 
+      confluence_validate.json.size > 0
+  - name: if post not exists 
+    uri:
+      url: "http://localhost:8090/rest/api/content/"
+      method: POST
+      url_username: "{{ confluence_user }}"
+      url_password: "{{ confluence_password }}"
+      headers:
+        Content-Type: "application/json"
+        Accept: "application/json"
+      force_basic_auth: yes
+      status_code: 201,200
+      validate_certs: false
+      body_format: "json"
+      body:
+        type: page
+        title: "{{ title }}"
+        version:
+          number: "1"
+        space:
+          key: "{{ confluence_space }}"
+        status: current
+        body:
+          storage:
+            value: "{{ body_text }}"
+            representation: "storage"
+    register: result
+  - debug:
+      # msg: "New post created!"
+      var: result
+    when: 
+      confluence_validate.json.size == 0
+  # - name: Create Confluence page
+  #   uri:
+  #     url: "http://localhost:8090/rest/api/content/"
+  #     method: POST
+  #     url_username: "admin"
+  #     url_password: "0305"
+  #     force_basic_auth: yes
+  #     status_code: 201,200
+  #     validate_certs: false
+  #     body_format: json
+  #     body:
+  #       type: "page"
+  #       title: "new ansible post"
+  #       space:
+  #         key: "SPC"
+  #       body:
+  #         storage:
+  #           value: "<p>This is auto post!</p>"
+  #           representation: "storage"
+  #   register: result
+  # - debug: 
+  #     var: result
+  #   when: confluence_validate.json.size == 1
+  # - name: Update Confluence page
+  #   uri:
+  #     url: "http://localhost:8090/rest/api/content/983043"
+  #     method: PUT
+  #     url_username: "admin"
+  #     url_password: "0305"
+  #     force_basic_auth: yes
+  #     status_code: 201,200
+  #     validate_certs: false
+  #     body_format: json
+  #     body:
+  #       type: "page"
+  #       title: "new ansible post"
+  #       version:
+  #         number: confluence_validate.json.number
+  #       space:
+  #         key: "SPC"
+  #       body:
+  #         storage:
+  #           value: "<p>This is auto updated post!</p>"
+  #           representation: "storage"
+  #   when: confluence_validate.json.size > 0

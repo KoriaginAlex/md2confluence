@@ -1,0 +1,12 @@
+{
+    "type":"page",
+    "title":"my_test_page",
+    "version":{"number":5},
+    "space":{"key":"SPC"},
+    "body":{
+        "storage":{
+            "value":"<p>Some Updated Content</p>",
+            "representation":"storage"
+        }
+    }
+}
